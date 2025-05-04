@@ -46,7 +46,7 @@ public class PlayerHeadItem extends BlockItem {
         super.translateComponentsToBedrock(session, components, builder);
 
         // Use the correct color, determined by the rarity of the item
-        char rarity = Rarity.fromId(components.get(DataComponentTypes.RARITY)).getColor();
+        char rarity = Rarity.fromId(components.getOrDefault(DataComponentTypes.RARITY, Rarity.COMMON.ordinal())).getColor();
 
         GameProfile profile = components.get(DataComponentTypes.PROFILE);
         if (profile != null) {
