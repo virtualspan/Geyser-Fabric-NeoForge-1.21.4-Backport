@@ -680,14 +680,8 @@ public class GeyserSession implements GeyserConnection, GeyserCommandSource {
     @Setter
     private int stepTicks = 0;
 
-    /*
-     * Stores the number of attempts to open virtual inventories.
-     * Capped at 3, and isn't used in ideal circumstances.
-     * Used to resolve https://github.com/GeyserMC/Geyser/issues/5426
-     */
     @Setter
-    private int containerOpenAttempts;
-
+    private boolean allowVibrantVisuals = true;
 
     public GeyserSession(GeyserImpl geyser, BedrockServerSession bedrockServerSession, EventLoop tickEventLoop) {
         this.geyser = geyser;
@@ -1602,7 +1596,9 @@ public class GeyserSession implements GeyserConnection, GeyserCommandSource {
         // Needed for certain molang queries used in blocks and items
         startGamePacket.getExperiments().add(new ExperimentData("experimental_molang_features", true));
         // Allows Vibrant Visuals to appear in the settings menu
-        startGamePacket.getExperiments().add(new ExperimentData("experimental_graphics", true));
+        if (allowVibrantVisuals && !GameProtocol.is1_21_90orHigher(this)) {
+            startGamePacket.getExperiments().add(new ExperimentData("experimental_graphics", true));
+        }
 
         startGamePacket.setVanillaVersion("*");
         startGamePacket.setInventoriesServerAuthoritative(true);
@@ -1620,6 +1616,7 @@ public class GeyserSession implements GeyserConnection, GeyserCommandSource {
         startGamePacket.setServerId("");
         startGamePacket.setWorldId("");
         startGamePacket.setScenarioId("");
+        startGamePacket.setOwnerId("");
 
         upstream.sendPacket(startGamePacket);
     }
@@ -1662,7 +1659,7 @@ public class GeyserSession implements GeyserConnection, GeyserCommandSource {
     /**
      * Queue a packet to be sent to player.
      *
-     * @param packet the bedrock packet from the NukkitX protocol lib
+     * @param packet the bedrock packet from the Cloudburst protocol lib
      */
     public void sendUpstreamPacket(BedrockPacket packet) {
         upstream.sendPacket(packet);
@@ -1671,7 +1668,7 @@ public class GeyserSession implements GeyserConnection, GeyserCommandSource {
     /**
      * Send a packet immediately to the player.
      *
-     * @param packet the bedrock packet from the NukkitX protocol lib
+     * @param packet the bedrock packet from the Cloudburst protocol lib
      */
     public void sendUpstreamPacketImmediately(BedrockPacket packet) {
         upstream.sendPacketImmediately(packet);
