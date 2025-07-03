@@ -150,12 +150,21 @@ public class ItemRegistryPopulator {
         itemFallbacks.put(Items.CREAKING_HEART, Items.CHISELED_POLISHED_BLACKSTONE);
         itemFallbacks.put(Items.CREAKING_SPAWN_EGG, Items.HOGLIN_SPAWN_EGG);
 
-        List<PaletteVersion> paletteVersions = new ArrayList<>(5);
-        paletteVersions.add(new PaletteVersion("1_21_50", Bedrock_v766.CODEC.getProtocolVersion(), itemFallbacks, (item, mapping) -> mapping));
-        paletteVersions.add(new PaletteVersion("1_21_60", Bedrock_v776.CODEC.getProtocolVersion(), itemFallbacks, (item, mapping) -> mapping));
-        paletteVersions.add(new PaletteVersion("1_21_70", Bedrock_v786.CODEC.getProtocolVersion()));
-        paletteVersions.add(new PaletteVersion("1_21_80", Bedrock_v800.CODEC.getProtocolVersion()));
-        paletteVersions.add(new PaletteVersion("1_21_90", Bedrock_v818.CODEC.getProtocolVersion()));
+        Map<Item, Item> fallbacks1_21_80 = new HashMap<>();
+        fallbacks1_21_80.put(Items.MUSIC_DISC_LAVA_CHICKEN, Items.MUSIC_DISC_CHIRP);
+        fallbacks1_21_80.put(Items.MUSIC_DISC_TEARS, Items.MUSIC_DISC_5);
+
+        List<PaletteVersion> paletteVersions = new ArrayList<>(3);
+        paletteVersions.add(new PaletteVersion("1_21_70", Bedrock_v786.CODEC.getProtocolVersion(), itemFallbacks));
+        paletteVersions.add(new PaletteVersion("1_21_80", Bedrock_v800.CODEC.getProtocolVersion(), fallbacks1_21_80));
+        paletteVersions.add(new PaletteVersion("1_21_90", Bedrock_v818.CODEC.getProtocolVersion(), Map.of(Items.MUSIC_DISC_LAVA_CHICKEN, Items.MUSIC_DISC_CHIRP)));
+        paletteVersions.add(new PaletteVersion("1_21_93", 819, Map.of(), (item, mapping) -> {
+            // FIXME do this in mappings
+            if (item == Items.MUSIC_DISC_LAVA_CHICKEN) {
+                return new GeyserMappingItem().withBedrockIdentifier("minecraft:music_disc_lava_chicken");
+            }
+            return mapping;
+        }));
 
         GeyserBootstrap bootstrap = GeyserImpl.getInstance().getBootstrap();
 
@@ -220,7 +229,12 @@ public class ItemRegistryPopulator {
                 // Some items, e.g. food, are not component based but still have components
                 NbtMap components = vanillaComponents.getCompound(entry.getName());
                 if (components == null && entry.isComponentBased()) {
-                    throw new RuntimeException("Could not find vanilla components for vanilla component based item! " + entry.getName());
+                    // FIXME needs a proper item components file update
+                    if (!entry.getName().contains("lava_chicken")) {
+                        throw new RuntimeException("Could not find vanilla components for vanilla component based item! " + entry.getName());
+                    } else {
+                        components = NbtMap.EMPTY;
+                    }
                 }
 
                 ItemDefinition definition = new SimpleItemDefinition(entry.getName().intern(), id, ItemVersion.from(entry.getVersion()), entry.isComponentBased(), components);
